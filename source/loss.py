@@ -1,16 +1,17 @@
 import torch
 import torch.nn as nn
+from source.OQR import *
+
 
 class loss(nn.Module):
-    def __init__( self, quantiles, penalty_w=0, penalty_o=0):
+    def __init__( self, coverage, penalty=0):
       
         super().__init__()
-        self.c = 1-quantiles[0]*2
-        self.lw = penalty_w
-        self.lo = penalty_o
-        self.quantiles = quantiles
-        self.q1 = quantiles[0]
-        self.q2 = quantiles[1]
+        self.c = coverage
+        self.l = penalty
+        self.quantiles = [(1-coverage)/2, 1-(1-coverage)/2]
+        self.q1 = self.quantiles[0]
+        self.q2 = self.quantiles[1]
         
     def forward(self, y_pred, target):
         pass
@@ -31,7 +32,31 @@ class RQRW_loss(loss):
         loss = loss1 + loss2
 
         return torch.mean(loss)
+    
+    
 
+class RQRO_loss(loss):
+ 
+    def forward(self, preds: torch.Tensor,  target: torch.Tensor) -> torch.Tensor:
+
+        # print(preds.shape, target.shape)
+        
+        y_pred_q1= torch.min(preds, axis=1)[0].view(-1,1)
+        y_pred_q2 = torch.max(preds, axis=1)[0].view(-1,1)
+        
+        
+        errors1 =   target -y_pred_q1 
+        errors2 =   target- y_pred_q2
+        loss1 = torch.maximum(errors1*errors2*(self.c), errors2*errors1*(self.c+-1))
+        
+        
+        loss2 = independence_penalty(target, y_pred_q1.view(1,-1), y_pred_q2.view(1,-1), pearsons_corr_multiplier=0, hsic_multiplier=self.l)
+        
+        loss = loss1 + loss2
+
+        return torch.mean(loss)
+    
+    
 class QR_loss(loss):
 
     def forward(self, y_pred, target: torch.Tensor) -> torch.Tensor:
@@ -42,10 +67,32 @@ class QR_loss(loss):
         losses = 2 * torch.cat(losses, dim=2)
 
         return torch.mean(losses)
+    
+
+
+class OQR_loss(loss):
+
+    def forward(self, y_pred, target: torch.Tensor) -> torch.Tensor:
+        
+        y_pred_q1= torch.min(y_pred, axis=1)[0].view(-1,1)
+        y_pred_q2 = torch.max(y_pred, axis=1)[0].view(-1,1)
+        
+        loss1 = []
+        for i, q in enumerate(self.quantiles):
+            errors = target - y_pred[::, i]
+            loss1.append(torch.max((q - 1) * errors, q * errors).unsqueeze(-1))
+        loss1 = 2 * torch.cat(loss1, dim=2)
+        
+        loss2 = independence_penalty(target, y_pred_q1.view(1,-1), y_pred_q2.view(1,-1), pearsons_corr_multiplier=0, hsic_multiplier=self.l)
+        
+        loss = loss1 + loss2
+
+
+        return torch.mean(loss)
 
 
 
-class HQ_loss(nn.Module):
+class HQ_loss(loss):
 
     def forward(self, preds: torch.Tensor,  target: torch.Tensor) -> torch.Tensor:
         y_pred_q1 = preds[:, 0]
@@ -72,14 +119,14 @@ class HQ_loss(nn.Module):
         PICP_S = torch.mean(K_S)
         
         
-        loss = MPIW_capt + self.penalty*n*(1/((1-self.c)*self.c))*torch.square(torch.maximum(torch.Tensor([0.]).to(y_pred_q1.device),self.c-PICP_S))
+        loss = MPIW_capt + self.l*n*(1/((1-self.c)*self.c))*torch.square(torch.maximum(torch.Tensor([0.]).to(y_pred_q1.device),self.c-PICP_S))
 
         
         return loss
 
 
 
-class Winkler_Loss(nn.Module):
+class Winkler_Loss(loss):
     def forward(self, preds, target):
      
         assert not target.requires_grad
@@ -96,14 +143,29 @@ class Winkler_Loss(nn.Module):
         loss = (y_pred_q2-y_pred_q1) + (2/alpha)*(y_pred_q1-target)*below_1  + (2/alpha)*(target-y_pred_q2)*below_2
         return loss.mean()
     
+class SQR_loss(loss):
+      def forward(self, y_pred, target: torch.Tensor, c=None) -> torch.Tensor:
+        losses = []
+        if c is None:
+            quantiles = self.quantiles
+        else:
+            quantiles = [(1-c)/2, 1-(1-c)/2]
+    
+        for i, q in enumerate(quantiles):
+            errors = target - y_pred[::, i]
+            losses.append(torch.max((q - 1) * errors, q * errors).unsqueeze(-1))
+        losses = 2 * torch.cat(losses, dim=2)
+
+        return torch.mean(losses)
+    
+    
     
 dict_loss = {"QR": QR_loss,
-             "RQR": RQRW_loss,
              "WS": Winkler_Loss,
              "RQR-W": RQRW_loss,
-             "IR": HQ_loss
-            #  "SQR":
-            #  "RQR-O":
-            #  "OQR" : 
+             "IR": HQ_loss,
+             "SQR": SQR_loss,
+             "RQR-O": RQRO_loss,
+             "OQR" : OQR_loss
 }
 

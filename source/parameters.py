@@ -1,14 +1,14 @@
 best_parameter_dict = {
     "concrete":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.0005,
             "scheduler1":0.999,
             "scheduler2":0.995,
             "penalty":0.1
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.00001,
             "scheduler1":1,
             "scheduler2":1,
@@ -33,14 +33,14 @@ best_parameter_dict = {
     },
     "boston":
     {
-        "QFR-W": {
+        "RQR-W": {
             "dropout":0.2,
             "penalty":0.1,
             "batch_size":512,
             "epochs":2000
         },
         
-        "Winkler": {
+        "WS": {
             "dropout":0.1,
             "lr":0.00001,
             "batch_size": 64,
@@ -52,6 +52,18 @@ best_parameter_dict = {
             "dropout":0.2           
             },
         
+        "RQR-O": {
+            "lr":1e-3,
+            "dropout":0.,     
+            "penalty":0.1,
+            },
+        
+        "OQR": {       
+            "lr":1e-3,
+            "dropout":0.,     
+            "penalty":0.1,
+            },
+        
         "IR": {
             "lr":0.001,
             "dropout":0.1,
@@ -59,10 +71,18 @@ best_parameter_dict = {
             "batch_size":512,
             "epochs":5000         
             },  
+        
+        "SQR": {
+            "lr":1e-3,
+            "dropout":0.,
+            "penalty":0.,
+            "batch_size":512,
+            "epochs":5000         
+            },  
     },
     "naval":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.02,
             "scheduler1":1,
             "scheduler2":1,
@@ -72,7 +92,7 @@ best_parameter_dict = {
             
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.000005,
             "scheduler1":1,
             "scheduler2":1,
@@ -101,7 +121,7 @@ best_parameter_dict = {
     },
     "kin8nm":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.02,
             "scheduler1":0.999,
             "scheduler2":0.998,
@@ -111,7 +131,7 @@ best_parameter_dict = {
             "epochs":3000
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.00001,
             "scheduler1":1,
             "scheduler2":1,
@@ -138,7 +158,7 @@ best_parameter_dict = {
     },
     "energy":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.008,
             "scheduler1":0.999,
             "scheduler2":0.999,
@@ -146,7 +166,7 @@ best_parameter_dict = {
             
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.00001,
             "scheduler1":1,
             "scheduler2":1,
@@ -174,7 +194,7 @@ best_parameter_dict = {
     },
     "power":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.005,
             "scheduler1":0.999,
             "scheduler2":0.999,
@@ -182,7 +202,7 @@ best_parameter_dict = {
             "penalty":3
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.005,
             "scheduler1":0.999,
             "scheduler2":0.999,
@@ -208,7 +228,7 @@ best_parameter_dict = {
     },
     "protein":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.0005,
             "scheduler1":0.999,
             "scheduler2":0.999,
@@ -216,7 +236,7 @@ best_parameter_dict = {
             "penalty":0.9
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.00001,
             "scheduler1":1,
             "scheduler2":1,
@@ -242,7 +262,7 @@ best_parameter_dict = {
     },
     "wine":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.0005,
             "penalty": 1,
             "batch_size": 512,
@@ -251,7 +271,7 @@ best_parameter_dict = {
                         
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.00001
 
             
@@ -271,7 +291,7 @@ best_parameter_dict = {
     },
     "yacht":
     {
-        "QFR-W": {
+        "RQR-W": {
             "lr":0.0008,
             "scheduler1":0.999,
             "scheduler2":0.999,
@@ -279,7 +299,7 @@ best_parameter_dict = {
             "penalty":0.9
         },
         
-        "Winkler": {
+        "WS": {
             "lr":0.00005,
             "scheduler1":1,
             "scheduler2":1,
