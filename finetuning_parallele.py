@@ -9,7 +9,7 @@ def run_process(cmd):
     process.wait()
 
 loss =   ["QR","WS","RQR-W","SQR","IR"] # ["QR","WS","RQR-W","SQR","RQR-O","OQR","IR"]
-dataset_names =  ["cpu_act", "sulfur", "miami"]   #["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht"]
+dataset_names =  ["cpu_act", "sulfur"]   #["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht"]
 
 n_seed = 10
 n_job = 30

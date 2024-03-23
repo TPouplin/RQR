@@ -8,8 +8,7 @@ def run_process(cmd):
     process = subprocess.Popen(cmd)
     process.wait()
 
-loss =  ["SQRN"] #["QR","WS","RQR-W","SQR","RQR-O","OQR","IR","SQRN"]
-dataset_names =  ["boston"] #["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht"]
+dataset_names =  ["cpu_act"]    #["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht"]
 
 n_seed = 10
 n_job = 30
