@@ -1,5 +1,5 @@
 from source.parameters import best_parameter_dict
-from source.model import Q_model, SQ_model
+from source.model import Q_model, SQ_model, SWS_model
 from data.dataset import GetDataset, Dataset
 
 
@@ -15,29 +15,30 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 
 
 
-default_parameters = {
-    "dropout":0.1,
-    "epochs":1000,
-    "lr":0.0005,
-    "penalty":0,
-    "batch_size":64
-}
+# default_parameters = {
+#     "dropout":0.1,
+#     "epochs":1000,
+#     "lr":0.0005,
+#     "penalty":0,
+#     "batch_size":64
+# }
 
-def run_experiment(config):
-    if not config["finetuning"]:
-        best_parameters = best_parameter_dict[config["dataset_name"]][config["loss"]]
+def run_experiment(config, data=None):
+    # if not config["finetuning"]:
+    #     best_parameters = best_parameter_dict[config["dataset_name"]][config["loss"]]
         
-        for key in default_parameters:
-            if (key not in config) or (config[key] is None) :
-                if key in best_parameters:
-                    config[key] = best_parameters[key]
-                else:
-                    config[key] = default_parameters[key]
+    #     for key in default_parameters:
+    #         if (key not in config) or (config[key] is None) :
+    #             if key in best_parameters:
+    #                 config[key] = best_parameters[key]
+    #             else:
+    #                 config[key] = default_parameters[key]
                 
     L.pytorch.seed_everything(config["random_seed"], workers=True)
-
-    X, y = GetDataset(config["dataset_name"], "data")
-        
+    if data is None:
+        X, y = GetDataset(config["dataset_name"], "data")
+    else:
+        X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=config["test_ratio"], random_state=config["random_seed"])
     
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=config["val_ratio"], random_state=config["random_seed"])
@@ -70,6 +71,12 @@ def run_experiment(config):
     
     if config["loss"] == "SQR":
         model = SQ_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
+        model.narrowest = False
+    elif config["loss"] == "SWS":
+        model = SWS_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
+    elif config["loss"] == "SQRN":
+        model = SQ_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
+        model.narrowest = True
     else:
         model = Q_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
     
@@ -89,9 +96,17 @@ def run_experiment(config):
         trainer = L.Trainer(max_epochs=config["epochs"],accelerator="gpu", deterministic=True, logger=logger, callbacks=[checkpoint_callback], enable_progress_bar=True)
 
     trainer.fit(model, train_loader, val_loader)
-        
-    # print("Model_trained")
+            
+    results = trainer.test(model, test_loader, ckpt_path= checkpoint_callback.best_model_path)
     
-    trainer.test(model, test_loader, ckpt_path= checkpoint_callback.best_model_path)
-    
-    return checkpoint_callback.best_model_score 
+    del train_dataset
+    del val_dataset
+    del test_dataset
+    del train_loader
+    del val_loader
+    del test_loader
+    del model 
+    del trainer
+    torch.cuda.empty_cache()
+
+    return checkpoint_callback.best_model_score, results[0]

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from source.OQR import *
-
+import numpy as np
 
 class loss(nn.Module):
     def __init__( self, coverage, penalty=0):
@@ -143,18 +143,33 @@ class Winkler_Loss(loss):
         loss = (y_pred_q2-y_pred_q1) + (2/alpha)*(y_pred_q1-target)*below_1  + (2/alpha)*(target-y_pred_q2)*below_2
         return loss.mean()
     
-class SQR_loss(loss):
-      def forward(self, y_pred, target: torch.Tensor, c=None) -> torch.Tensor:
-        losses = []
+class S_Winkler_Loss(loss):
+    def forward(self, preds, target, c=None):
         if c is None:
-            quantiles = self.quantiles
-        else:
-            quantiles = [(1-c)/2, 1-(1-c)/2]
+            c = self.coverage
+ 
+        alpha = 1-c
+        y_pred_q1 = preds[:, 0]
+        y_pred_q2 = preds[:, 1]
+        
+        below_1 = (y_pred_q1-target).gt(-1)
+        below_2 = (target-y_pred_q2).gt(-1)
+        
+        # print(y_pred_q1.shape, y_pred_q2.shape, target.shape, below_1.shape, below_2.shape)
+        loss = (y_pred_q2-y_pred_q1) + (2/alpha)*(y_pred_q1-target)*below_1  + (2/alpha)*(target-y_pred_q2)*below_2
+        return loss.mean()
     
+class SQR_loss(loss):
+      def forward(self, y_pred, target: torch.Tensor, quantiles=None) -> torch.Tensor:
+        losses = []
+        if quantiles is None:
+            quantiles = self.quantiles
+
+        quantiles = quantiles.unsqueeze(-1)
         for i, q in enumerate(quantiles):
             errors = target - y_pred[::, i]
             losses.append(torch.max((q - 1) * errors, q * errors).unsqueeze(-1))
-        losses = 2 * torch.cat(losses, dim=2)
+        losses = torch.cat(losses, dim=2)
 
         return torch.mean(losses)
     
@@ -166,6 +181,8 @@ dict_loss = {"QR": QR_loss,
              "IR": HQ_loss,
              "SQR": SQR_loss,
              "RQR-O": RQRO_loss,
-             "OQR" : OQR_loss
+             "OQR" : OQR_loss,
+             "SWS" : S_Winkler_Loss,
+             "SQRN" : SQR_loss
 }
 

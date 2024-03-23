@@ -32,15 +32,17 @@ class Q_model(L.pytorch.LightningModule):
         
         if loss ==  "SQR":
             self.in_shape = x_shape+1
+            self.out_shape = 1
         else:
             self.in_shape = x_shape
+            self.out_shape = 2
+
         
-        
-        self.out_shape = 2
         self.dropout = dropout
         self.lr = lr
         self.loss = loss
         self.coverage = coverage
+        self.quantiles = [(1-coverage)/2, 1-(1-coverage)/2]
         
         self.loss_fn = dict_loss[loss](coverage, penalty=penalty)
         self.build_model()
@@ -129,7 +131,7 @@ class Q_model(L.pytorch.LightningModule):
         return loss
     
 
-class SQ_model(Q_model):
+class SWS_model(Q_model):
     def step(self, batch, batch_idx, coverages):
         x, y = batch
         
@@ -149,7 +151,7 @@ class SQ_model(Q_model):
         """ Training step
         """
         
-        coverages = torch.rand(30).to("cuda") #number of dcoverage sample, default value from the OQR implementation
+        coverages = torch.rand(30).to("cuda") #number of coverage sample, default value from the OQR implementation
         
         loss, metrics = self.step(batch, batch_idx, coverages)
         
@@ -177,6 +179,92 @@ class SQ_model(Q_model):
         coverages = torch.Tensor([self.coverage]).to("cuda")
         
         loss, metrics = self.step(batch, batch_idx, coverages)
+        
+        self.log("test_loss", loss)        
+        self.log("test_coverage", metrics["coverage"])
+        self.log("test_width", metrics["interval_width"])
+            
+        # print( f"Metrics on test set  ! \n Coverage : {metrics['coverage']} \n Width : {metrics['interval_width']} \n Loss : {loss} \n")
+    
+        return loss
+    
+
+
+class SQ_model(Q_model):
+    def step(self, batch, batch_idx, quantiles, return_metrics=False):
+        x, y = batch
+        losses = []
+        
+        if self.narrowest and return_metrics:
+            results = []
+            for i,x in batch:
+                bins = 10
+                quantiles = np.linspace(0, 1-self.coverage, bins)
+                min_width = float("inf") 
+                best_y_hat = None
+                best_q = None
+                for q in quantiles:
+                    couple_q = torch.tensor([q,self.coverage+q])
+                    x_q = torch.cat([x.repeat(2,1), couple_q.repeat], dim=1)
+                    y_hat = self(x_q)
+                    width = y_hat[1] - y_hat[0]
+                    if width < min_width:
+                        min_width = width
+                        best_y_hat = y_hat
+                        best_q = couple_q
+                results.append(best_y_hat)
+                losses.append(self.loss_fn(best_y_hat, y, best_q))
+            y_hat = torch.stack(results)            
+        else:
+            results = []
+            for q in quantiles:
+                x_q = torch.cat([x, q.repeat(x.shape[0], 1)], dim=1)
+                y_hat = self(x_q)
+                losses.append(self.loss_fn(y_hat, y, q))
+                results.append(y_hat)
+                
+        loss = torch.mean(torch.stack(losses))
+
+        if return_metrics:
+        
+            y_hat = torch.stack(results, dim=1).squeeze()
+            metrics = compute_metrics(y_hat, y)
+            return loss, metrics
+        else:
+            return loss
+    
+    def training_step(self, batch, batch_idx):
+        """ Training step
+        """
+        
+        quantiles = torch.rand(30).to("cuda") #number of coverage sample, default value from the OQR implementation
+        
+        loss = self.step(batch, batch_idx, quantiles)
+        
+        self.log("train_loss", loss)
+
+        
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        """ Validation step
+        """
+        
+        quantiles = torch.rand(30).to("cuda") #number of dcoverage sample, default value from the OQR implementation
+        
+        loss = self.step(batch, batch_idx, quantiles)
+        
+        self.log("val_loss", loss)
+        
+        return loss
+    
+    def test_step(self, batch, batch_idx):
+        """ Test step
+        """
+        
+        quantiles = torch.Tensor(self.quantiles).to("cuda")
+        
+        loss, metrics = self.step(batch, batch_idx, quantiles, return_metrics=True)
         
         self.log("test_loss", loss)        
         self.log("test_coverage", metrics["coverage"])

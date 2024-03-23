@@ -1,9 +1,30 @@
 import numpy as np
 import torch
-
+import pandas as pd 
 def GetDataset(name, base_path):
-
-    data = np.loadtxt(base_path + "/UCI_Datasets/{}.txt".format(name))
+    if name == "cpu_act":
+        data = pd.read_csv(base_path + "/cpu_act.arff", header=None)
+        data.drop(columns=[21], inplace=True)
+        data = np.array(data.values.tolist())
+        
+    elif name == "sulfur":
+        data = pd.read_csv(base_path + "/sulfur.arff", header=None)
+        data.drop(columns=[6], inplace=True)
+        data = np.array(data.values.tolist())
+        
+        
+    elif name == "miami":
+        data = pd.read_csv(base_path + "/miami.arff", header=None)
+        data.drop(columns=[2], inplace=True)
+        data = data[[0,1,4,5,6,7,8,9,10,11,12,13,14,15,16,3]]
+        data = np.array(data.values.tolist())
+        
+    else:
+        data = np.loadtxt(base_path + "/UCI_Datasets/{}.txt".format(name))
+    
+    
+    # print(data[:2])
+    
     X = data[:, :-1]
     y = data[:, -1].reshape(-1, 1)
 
