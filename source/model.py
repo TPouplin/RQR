@@ -3,6 +3,7 @@ import torch.nn as nn
 import lightning as L
 from source.loss import *
 from source.metrics import *
+from tqdm import tqdm
 
 class Q_model(L.pytorch.LightningModule):
     """ Conditional quantile estimator, formulated as neural net
@@ -30,12 +31,17 @@ class Q_model(L.pytorch.LightningModule):
         self.hidden_size = hidden_size
         
         
-        if loss ==  "SQR":
+        if loss ==  "SQR" or loss == "SQRN":
             self.in_shape = x_shape+1
             self.out_shape = 1
+        elif loss == "SWS":
+            self.in_shape = x_shape +1
+            self.out_shape = 2
         else:
             self.in_shape = x_shape
             self.out_shape = 2
+        
+
 
         
         self.dropout = dropout
@@ -197,23 +203,37 @@ class SQ_model(Q_model):
         
         if self.narrowest and return_metrics:
             results = []
-            for i,x in batch:
-                bins = 10
-                quantiles = np.linspace(0, 1-self.coverage, bins)
+            
+            bins = 10
+            quantiles = torch.tensor(np.linspace(0, 1-self.coverage, bins)).cuda().float()
+            result_all_quantiles = []
+            for q in quantiles:
+              
+                
+                x_l = torch.cat([x, q.repeat(x.shape[0], 1)], dim=1)
+                x_u = torch.cat([x, (self.coverage+q).repeat(x.shape[0], 1)], dim=1)
+                y_u = self(x_u)
+                y_l = self(x_l)
+                result_all_quantiles.append((y_l,y_u))
+            
+            y_hat = torch.tensor(np.zeros((x.shape[0],2)))
+            
+            for i in tqdm(range(x.shape[0])):
                 min_width = float("inf") 
-                best_y_hat = None
                 best_q = None
-                for q in quantiles:
-                    couple_q = torch.tensor([q,self.coverage+q])
-                    x_q = torch.cat([x.repeat(2,1), couple_q.repeat], dim=1)
-                    y_hat = self(x_q)
-                    width = y_hat[1] - y_hat[0]
+                for q in range(len(quantiles)):
+                    u =result_all_quantiles[q][1][i]
+                    l = result_all_quantiles[q][0][i]
+                    width =  u - l
                     if width < min_width:
                         min_width = width
-                        best_y_hat = y_hat
-                        best_q = couple_q
-                results.append(best_y_hat)
-                losses.append(self.loss_fn(best_y_hat, y, best_q))
+                        best_q = (quantiles[q], self.coverage- quantiles[q])
+                        y_hat[i] =  torch.cat([l,u], axis=0).cpu()
+                    
+                losses.append(self.loss_fn(y_hat.cpu(), y.cpu(), torch.tensor(best_q).cpu()))
+              
+            results = [y_hat] 
+
             y_hat = torch.stack(results)            
         else:
             results = []
@@ -227,7 +247,7 @@ class SQ_model(Q_model):
 
         if return_metrics:
         
-            y_hat = torch.stack(results, dim=1).squeeze()
+            y_hat = torch.stack(results, dim=1).squeeze().cuda()
             metrics = compute_metrics(y_hat, y)
             return loss, metrics
         else:
@@ -252,10 +272,11 @@ class SQ_model(Q_model):
         
         quantiles = torch.rand(30).to("cuda") #number of dcoverage sample, default value from the OQR implementation
         
-        loss = self.step(batch, batch_idx, quantiles)
+        loss, metrics = self.step(batch, batch_idx, quantiles, return_metrics=True)
         
         self.log("val_loss", loss)
-        
+        self.log("val_coverage", metrics["coverage"])
+        self.log("val_width", metrics["interval_width"])
         return loss
     
     def test_step(self, batch, batch_idx):

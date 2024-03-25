@@ -1,7 +1,7 @@
 from source.run_experiment import run_experiment
 from data.dataset import GetDataset
 import numpy as np
-
+from tqdm import tqdm
 
 loss =  ["QR","WS","RQR-W","SQR","RQR-O","OQR","IR"]
 dataset_names =  ["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht"]
@@ -12,7 +12,7 @@ config["finetuning"] = False
 
 
 other_parameters = {
-    "epochs": 300,
+    "epochs": 800,
     "coverage": 0.9,
     "test_ratio": 0.2,
     "val_ratio": 0.2,
@@ -34,7 +34,7 @@ config["loss"] = "RQR-W"
 
 config["penalty"] = 1
 config["lr"] =0.01
-config["dropout"] =0.1
+config["dropout"] =0.3
 
 
 data = GetDataset(config["dataset_name"], "data")
@@ -42,7 +42,7 @@ data = GetDataset(config["dataset_name"], "data")
 coverage = []
 width = []
 
-for seed in range(10):
+for seed in tqdm(range(10), leave=False):
     config["random_seed"] = seed
     val_loss,results = run_experiment(config, data)
     print("seed : ", results)

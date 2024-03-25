@@ -61,9 +61,9 @@ def run_experiment(config, data=None):
     val_dataset = Dataset(torch.tensor(X_val, dtype=torch.float32), torch.tensor(y_val, dtype=torch.float32))
     test_dataset = Dataset(torch.tensor(X_test, dtype=torch.float32), torch.tensor(y_test, dtype=torch.float32))
     
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, pin_memory=True, persistent_workers=True, num_workers=2)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, pin_memory=True, persistent_workers=True, num_workers=2)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=False, pin_memory=True, persistent_workers=True, num_workers=2)
     
     # print("Data loaded")
     
@@ -88,7 +88,7 @@ def run_experiment(config, data=None):
     
     logger.log_hyperparams(config)
     
-    checkpoint_callback = ModelCheckpoint(dirpath=f'''results/logs/{config["loss"]}_{config["dataset_name"]}_{config["random_seed"]}_{date}''', save_top_k=1, monitor="val_loss", filename="best_checkpoint")
+    checkpoint_callback = ModelCheckpoint(dirpath=f'''results/logs/{config["loss"]}_{config["dataset_name"]}_{config["random_seed"]}_{date}''', save_top_k=1, monitor="val_width", filename="best_checkpoint")
     
     if config["finetuning"]:
         trainer = L.Trainer(max_epochs=config["epochs"],accelerator="gpu", logger=False, deterministic=True,callbacks=[checkpoint_callback], enable_progress_bar=False, enable_model_summary=False)
@@ -96,8 +96,11 @@ def run_experiment(config, data=None):
         trainer = L.Trainer(max_epochs=config["epochs"],accelerator="gpu", deterministic=True, logger=logger, callbacks=[checkpoint_callback], enable_progress_bar=True)
 
     trainer.fit(model, train_loader, val_loader)
-            
-    results = trainer.test(model, test_loader, ckpt_path= checkpoint_callback.best_model_path)
+    if config["finetuning"]:
+        results = trainer.test(model, val_loader, ckpt_path= checkpoint_callback.best_model_path)
+    else:
+        results = trainer.test(model, test_loader, ckpt_path= checkpoint_callback.best_model_path)
+
     
     del train_dataset
     del val_dataset
@@ -108,5 +111,6 @@ def run_experiment(config, data=None):
     del model 
     del trainer
     torch.cuda.empty_cache()
+
 
     return checkpoint_callback.best_model_score, results[0]

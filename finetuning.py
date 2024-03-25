@@ -3,21 +3,29 @@ import optuna
 import argparse
 from source.run_experiment import run_experiment
 import torch 
+import numpy as np
 
 fine_tuned_parameters = {
-    "lr": [0.001,0.0001], #
+    "lr": [0.01, 0.001], #
     "dropout": [0.0, 0.1, 0.2, 0.3],
-    "penalty": [0.0001,0.001,0.01,0.1,1,10],   
+    "penalty": [0.1,1,10],   
 }
     
 other_parameters = {
-    "epochs": 300,
+    "epochs": 1000,
     "coverage": 0.9,
     "test_ratio": 0.2,
     "val_ratio": 0.2,
-    "batch_size": 2000,    
+    "batch_size": 5000,    
 }
 
+
+def objective_function(coverage, width):
+    if np.abs((coverage - 0.9)) > 0.9*2.5/100:
+        obj = 100
+    else:
+       obj = width
+    return obj
 
 
 def objective(trial, dataset_name, loss, seed, p):
@@ -41,8 +49,11 @@ def objective(trial, dataset_name, loss, seed, p):
     for key in other_parameters:
         config[key] = other_parameters[key]
         
-    val_loss,_ = run_experiment(config)
-    return val_loss
+    val_loss,results = run_experiment(config)
+    
+
+        
+    return objective_function(results["test_coverage"],results["test_width"])
 
 
 
@@ -75,8 +86,9 @@ def fine_tuning():
     print("PARAMETER SET")
     for seed in range(args.n_seed):
         for p in penalty:
-            study = optuna.create_study(storage= "sqlite:///results/finetuning/recording_ultra_light_reb.db", study_name = args.dataset_name+ "_"+ args.loss + "_" + str(p) + "_" + str(seed), direction='minimize', load_if_exists=True)
-            current_n_trial = max(0,n_trial - len(study.trials))
+            study = optuna.create_study(storage= "sqlite:///results/finetuning/recording_new_obj.db", study_name = args.dataset_name+ "_"+ args.loss + "_" + str(p) + "_" + str(seed), direction='minimize', load_if_exists=True)
+            currated_nb_trial = np.sum([ 1 if x.state != optuna.trial.TrialState.FAIL else 0 for x in study.trials])
+            current_n_trial = max(0,n_trial - currated_nb_trial)
             print(f"Process seed {seed}, dataset {args.dataset_name}, loss {args.loss}, penalty {p} started. Remaining trials : {current_n_trial}/ {n_trial}")
 
             study.optimize(lambda trial: objective(trial, args.dataset_name, args.loss, seed, p), n_trials=current_n_trial, n_jobs=1)
