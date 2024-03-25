@@ -8,7 +8,7 @@ import os
 import pandas as pd 
 from data.dataset import GetDataset
 
-loss = ["RQR-W"] #["QR","WS","RQR-W","SQR","RQR-O","OQR","IR"]
+loss = ["SQRN"] #["QR","WS","RQR-W","SQR","RQR-O","OQR","IR"]
 
 
 def testing():
@@ -49,7 +49,7 @@ def testing():
             best_config  = {}
            
             for p in penalty:
-                study = optuna.load_study(storage= "sqlite:///results/finetuning/recording_ultra_light_rebV2.db", study_name = args.dataset_name+ "_"+ l + "_" + str(p) + "_" + str(seed))
+                study = optuna.load_study(storage= "sqlite:///results/finetuning/recording_ultra_light.db", study_name = args.dataset_name+ "_"+ l + "_" + str(p) + "_" + str(seed))
                 best_params = study.best_params
                 for key in best_params.keys():
                     config[key] =  best_params[key]
