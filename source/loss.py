@@ -57,16 +57,7 @@ class RQRO_loss(loss):
         return torch.mean(loss)
     
     
-class QR_loss(loss):
 
-    def forward(self, y_pred, target: torch.Tensor) -> torch.Tensor:
-        losses = []
-        for i, q in enumerate(self.quantiles):
-            errors = target - y_pred[::, i]
-            losses.append(torch.max((q - 1) * errors, q * errors).unsqueeze(-1))
-        losses = 2 * torch.cat(losses, dim=2)
-
-        return torch.mean(losses)
     
 
 
@@ -124,6 +115,16 @@ class HQ_loss(loss):
         
         return loss
 
+class QR_loss(loss):
+
+    def forward(self, y_pred, target: torch.Tensor) -> torch.Tensor:
+        losses = []
+        for i, q in enumerate(self.quantiles):
+            errors = target - y_pred[::, i]
+            losses.append(torch.max((q - 1) * errors, q * errors).unsqueeze(-1))
+        losses = 2 * torch.cat(losses, dim=2)
+
+        return torch.mean(losses)
 
 
 class Winkler_Loss(loss):
@@ -136,12 +137,15 @@ class Winkler_Loss(loss):
         y_pred_q1 = preds[:, 0]
         y_pred_q2 = preds[:, 1]
         
-        below_1 = (y_pred_q1-target).gt(-1)
-        below_2 = (target-y_pred_q2).gt(-1)
+        below_1 = (y_pred_q1-target).gt(0)
+        below_2 = (target-y_pred_q2).gt(0)
         
         # print(y_pred_q1.shape, y_pred_q2.shape, target.shape, below_1.shape, below_2.shape)
         loss = (y_pred_q2-y_pred_q1) + (2/alpha)*(y_pred_q1-target)*below_1  + (2/alpha)*(target-y_pred_q2)*below_2
         return loss.mean()
+    
+
+    
     
 class S_Winkler_Loss(loss):
     def forward(self, preds, target, c=None):
@@ -152,8 +156,8 @@ class S_Winkler_Loss(loss):
         y_pred_q1 = preds[:, 0]
         y_pred_q2 = preds[:, 1]
         
-        below_1 = (y_pred_q1-target).gt(-1)
-        below_2 = (target-y_pred_q2).gt(-1)
+        below_1 = (y_pred_q1-target).gt(0)
+        below_2 = (target-y_pred_q2).gt(0)
         
         # print(y_pred_q1.shape, y_pred_q2.shape, target.shape, below_1.shape, below_2.shape)
         loss = (y_pred_q2-y_pred_q1) + (2/alpha)*(y_pred_q1-target)*below_1  + (2/alpha)*(target-y_pred_q2)*below_2

@@ -5,6 +5,16 @@ from source.loss import *
 from source.metrics import *
 from tqdm import tqdm
 
+def objective_function(coverage, width):
+    if type(coverage) != torch.Tensor:
+        coverage = torch.tensor(coverage)
+    
+    if torch.abs((coverage - 0.9)) > 0.9*2.5/100:
+        obj= torch.abs((coverage - 0.9))*100
+    else:
+       obj = width
+    return obj
+
 class Q_model(L.pytorch.LightningModule):
     """ Conditional quantile estimator, formulated as neural net
     """
@@ -111,9 +121,10 @@ class Q_model(L.pytorch.LightningModule):
 
         loss, metrics = self.step(batch, batch_idx)
         
-        self.log("val_loss", loss)
-        self.log("val_coverage", metrics["coverage"])
-        self.log("val_width", metrics["interval_width"])
+        self.log("val_loss", loss,sync_dist=True)
+        self.log("val_coverage", metrics["coverage"],sync_dist=True)
+        self.log("val_width", metrics["interval_width"],sync_dist=True)
+        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"]),sync_dist=True)
         
         return loss
     
@@ -128,9 +139,9 @@ class Q_model(L.pytorch.LightningModule):
         """
         loss, metrics = self.step(batch, batch_idx)
         
-        self.log("test_loss", loss)        
-        self.log("test_coverage", metrics["coverage"])
-        self.log("test_width", metrics["interval_width"])
+        self.log("test_loss", loss,sync_dist=True)        
+        self.log("test_coverage", metrics["coverage"],sync_dist=True)
+        self.log("test_width", metrics["interval_width"],sync_dist=True)
             
         # print( f"Metrics on test set  ! \n Coverage : {metrics['coverage']} \n Width : {metrics['interval_width']} \n Loss : {loss} \n")
     
@@ -157,11 +168,11 @@ class SWS_model(Q_model):
         """ Training step
         """
         
-        coverages = torch.rand(30).to("cuda") #number of coverage sample, default value from the OQR implementation
+        coverages = torch.rand(30).to(self.device) #number of coverage sample, default value from the OQR implementation
         
         loss, metrics = self.step(batch, batch_idx, coverages)
         
-        self.log("train_loss", loss)
+        self.log("train_loss", loss,sync_dist=True)
 
         
         return loss
@@ -170,25 +181,26 @@ class SWS_model(Q_model):
         """ Validation step
         """
         
-        coverages = torch.rand(30).to("cuda") #number of dcoverage sample, default value from the OQR implementation
+        coverages = torch.rand(30).to(self.device) #number of dcoverage sample, default value from the OQR implementation
         
         loss, metrics = self.step(batch, batch_idx, coverages)
         
-        self.log("val_loss", loss)
-        
+        self.log("val_loss", loss,sync_dist=True)
+        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"]),sync_dist=True)
+
         return loss
     
     def test_step(self, batch, batch_idx):
         """ Test step
         """
         
-        coverages = torch.Tensor([self.coverage]).to("cuda")
+        coverages = torch.Tensor([self.coverage]).to(self.device)
         
         loss, metrics = self.step(batch, batch_idx, coverages)
         
-        self.log("test_loss", loss)        
-        self.log("test_coverage", metrics["coverage"])
-        self.log("test_width", metrics["interval_width"])
+        self.log("test_loss", loss,sync_dist=True)      
+        self.log("test_coverage", metrics["coverage"],sync_dist=True)
+        self.log("test_width", metrics["interval_width"],sync_dist=True)
             
         # print( f"Metrics on test set  ! \n Coverage : {metrics['coverage']} \n Width : {metrics['interval_width']} \n Loss : {loss} \n")
     
@@ -197,15 +209,15 @@ class SWS_model(Q_model):
 
 
 class SQ_model(Q_model):
-    def step(self, batch, batch_idx, quantiles, return_metrics=False):
+    def step(self, batch, batch_idx, quantiles, return_metrics=False, test=False):
         x, y = batch
         losses = []
         
-        if self.narrowest and return_metrics:
+        if self.narrowest and return_metrics and test:
             results = []
             
             bins = 10
-            quantiles = torch.tensor(np.linspace(0, 1-self.coverage, bins)).cuda().float()
+            quantiles = torch.tensor(np.linspace(0, 1-self.coverage, bins)).to(self.device).float()
             result_all_quantiles = []
             for q in quantiles:
               
@@ -216,7 +228,7 @@ class SQ_model(Q_model):
                 y_l = self(x_l)
                 result_all_quantiles.append((y_l,y_u))
             
-            y_hat = torch.tensor(np.zeros((x.shape[0],2)))
+            y_hat = torch.tensor(np.zeros((x.shape[0],2))).to(x.device)
             
             for i in tqdm(range(x.shape[0])):
                 min_width = float("inf") 
@@ -228,9 +240,9 @@ class SQ_model(Q_model):
                     if width < min_width:
                         min_width = width
                         best_q = (quantiles[q], self.coverage- quantiles[q])
-                        y_hat[i] =  torch.cat([l,u], axis=0).cpu()
+                        y_hat[i] =  torch.cat([l,u], axis=0)
                     
-                losses.append(self.loss_fn(y_hat.cpu(), y.cpu(), torch.tensor(best_q).cpu()))
+                losses.append(self.loss_fn(y_hat, y, torch.tensor(best_q).to(batch[0].device)))
               
             results = [y_hat] 
 
@@ -247,7 +259,7 @@ class SQ_model(Q_model):
 
         if return_metrics:
         
-            y_hat = torch.stack(results, dim=1).squeeze().cuda()
+            y_hat = torch.stack(results, dim=1).squeeze().to(self.device)
             metrics = compute_metrics(y_hat, y)
             return loss, metrics
         else:
@@ -257,11 +269,11 @@ class SQ_model(Q_model):
         """ Training step
         """
         
-        quantiles = torch.rand(30).to("cuda") #number of coverage sample, default value from the OQR implementation
+        quantiles = torch.rand(30).to(self.device) #number of coverage sample, default value from the OQR implementation
         
         loss = self.step(batch, batch_idx, quantiles)
         
-        self.log("train_loss", loss)
+        self.log("train_loss", loss,sync_dist=True)
 
         
         return loss
@@ -270,26 +282,28 @@ class SQ_model(Q_model):
         """ Validation step
         """
         
-        quantiles = torch.rand(30).to("cuda") #number of dcoverage sample, default value from the OQR implementation
+        quantiles = torch.rand(30).to(batch[0].device) #number of dcoverage sample, default value from the OQR implementation
         
         loss, metrics = self.step(batch, batch_idx, quantiles, return_metrics=True)
         
-        self.log("val_loss", loss)
-        self.log("val_coverage", metrics["coverage"])
-        self.log("val_width", metrics["interval_width"])
+        self.log("val_loss", loss,sync_dist=True)
+        self.log("val_coverage", metrics["coverage"],sync_dist=True)
+        self.log("val_width", metrics["interval_width"],sync_dist=True)
+        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"]),sync_dist=True)
+
         return loss
     
     def test_step(self, batch, batch_idx):
         """ Test step
         """
         
-        quantiles = torch.Tensor(self.quantiles).to("cuda")
+        quantiles = torch.Tensor(self.quantiles).to(self.device)
         
-        loss, metrics = self.step(batch, batch_idx, quantiles, return_metrics=True)
+        loss, metrics = self.step(batch, batch_idx, quantiles, return_metrics=True, test=True)
         
-        self.log("test_loss", loss)        
-        self.log("test_coverage", metrics["coverage"])
-        self.log("test_width", metrics["interval_width"])
+        self.log("test_loss", loss,sync_dist=True)      
+        self.log("test_coverage", metrics["coverage"],sync_dist=True)
+        self.log("test_width", metrics["interval_width"],sync_dist=True)
             
         # print( f"Metrics on test set  ! \n Coverage : {metrics['coverage']} \n Width : {metrics['interval_width']} \n Loss : {loss} \n")
     

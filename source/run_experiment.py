@@ -35,6 +35,9 @@ def run_experiment(config, data=None):
     #                 config[key] = default_parameters[key]
                 
     L.pytorch.seed_everything(config["random_seed"], workers=True)
+    
+    device = config["device"]
+    
     if data is None:
         X, y = GetDataset(config["dataset_name"], "data")
     else:
@@ -88,29 +91,34 @@ def run_experiment(config, data=None):
     
     logger.log_hyperparams(config)
     
-    checkpoint_callback = ModelCheckpoint(dirpath=f'''results/logs/{config["loss"]}_{config["dataset_name"]}_{config["random_seed"]}_{date}''', save_top_k=1, monitor="val_width", filename="best_checkpoint")
+    checkpoint_callback = ModelCheckpoint(dirpath=f'''results/logs/{config["loss"]}_{config["dataset_name"]}_{config["random_seed"]}_{date}''', save_top_k=1, monitor="val_objective", filename="best_checkpoint")
+    
+
     
     if config["finetuning"]:
-        trainer = L.Trainer(max_epochs=config["epochs"],accelerator="gpu", logger=False, deterministic=True,callbacks=[checkpoint_callback], enable_progress_bar=False, enable_model_summary=False)
+        trainer = L.Trainer(max_epochs=config["epochs"],  devices = [device], accelerator="gpu", logger=False, deterministic=True,callbacks=[checkpoint_callback], enable_progress_bar=False, enable_model_summary=False)
     else:
-        trainer = L.Trainer(max_epochs=config["epochs"],accelerator="gpu", deterministic=True, logger=logger, callbacks=[checkpoint_callback], enable_progress_bar=True)
+        trainer = L.Trainer(max_epochs=config["epochs"], devices = [device],  accelerator="gpu", deterministic=True, logger=logger, callbacks=[checkpoint_callback], enable_progress_bar=True)
 
     trainer.fit(model, train_loader, val_loader)
+    
     if config["finetuning"]:
         results = trainer.test(model, val_loader, ckpt_path= checkpoint_callback.best_model_path)
+        del train_dataset
+        del val_dataset
+        del test_dataset
+        del train_loader
+        del val_loader
+        del test_loader
+        del model 
+        del trainer
+        torch.cuda.empty_cache()
+        return checkpoint_callback.best_model_score, results[0]
     else:
-        results = trainer.test(model, test_loader, ckpt_path= checkpoint_callback.best_model_path)
-
+        results_val = trainer.test(model, val_loader, ckpt_path= checkpoint_callback.best_model_path)
+        results_test = trainer.test(model, test_loader, ckpt_path= checkpoint_callback.best_model_path)
+        return checkpoint_callback.best_model_score, results_test[0], results_val[0]
     
-    del train_dataset
-    del val_dataset
-    del test_dataset
-    del train_loader
-    del val_loader
-    del test_loader
-    del model 
-    del trainer
-    torch.cuda.empty_cache()
 
 
-    return checkpoint_callback.best_model_score, results[0]
+
