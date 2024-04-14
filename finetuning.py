@@ -9,7 +9,8 @@ from data.dataset import GetDataset
 fine_tuned_parameters = {
     "lr": [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001], #
     "dropout": [0,0.1, 0.2, 0.3,0.4],
-    "penalty": [0.01,0.1,0.5,1,5, 10,15,20,30,40,50],   
+    # "penalty": [0.01,0.1,0.5,1,5, 10,15,20,30,40,50],   
+    "penalty" : [0.1,1, 10,20,30,40,50]
 }
     
 other_parameters = {
@@ -46,10 +47,7 @@ def objective(trial, dataset_name, loss, seed, p, data, device):
     for key in other_parameters:
         config[key] = other_parameters[key]
     
-    
-    if dataset_name == "nyc_taxi" or dataset_name == "medical_charges":
-        config["batch_size"] = 20000
-    
+
     
     
     try : 
@@ -79,6 +77,7 @@ def fine_tuning():
     parser.add_argument('--loss', type=str, default="QR", help='The name ofthe loss function')
     parser.add_argument('--n_seed', type=int, default=10, help='Number of seed')
     parser.add_argument('--gpu', type=int, default=0, help='The id of the gpu to use')
+    parser.add_argument('--coverage', type=float, default=0.9, help='Targeted coverage')
 
     args = parser.parse_args()
 
@@ -101,7 +100,7 @@ def fine_tuning():
     print("SEEDS : ", seeds)
     for seed in seeds:
         for p in penalty:
-            study = optuna.create_study(storage= "sqlite:///results/finetuning/recording_final_full.db", study_name = args.dataset_name+ "_"+ args.loss + "_" + str(p) + "_" + str(seed), direction='minimize', load_if_exists=True)
+            study = optuna.create_study(storage= "sqlite:///results/finetuning/recording_final_full.db", study_name = args.dataset_name+ "_" + args.loss + "_" + str(p) + "_" + str(seed), direction='minimize', load_if_exists=True)
             currated_nb_trial = np.sum([ 1 if x.state != optuna.trial.TrialState.FAIL else 0 for x in study.trials])
             current_n_trial = int(max(0,n_trial - currated_nb_trial))
             print(f"Process seed {seed}, dataset {args.dataset_name}, loss {args.loss}, penalty {p} started. Remaining trials : {current_n_trial}/ {n_trial}")

@@ -5,12 +5,12 @@ from source.loss import *
 from source.metrics import *
 from tqdm import tqdm
 
-def objective_function(coverage, width):
+def objective_function(coverage, width, target_coverage):
     if type(coverage) != torch.Tensor:
         coverage = torch.tensor(coverage)
     
-    if torch.abs((coverage - 0.9)) > 0.9*2.5/100:
-        obj= torch.abs((coverage - 0.9))*100
+    if torch.abs((coverage - target_coverage)) > target_coverage*2.5/100:
+        obj= torch.abs((coverage - target_coverage))*100
     else:
        obj = width
     return obj
@@ -124,7 +124,7 @@ class Q_model(L.pytorch.LightningModule):
         self.log("val_loss", loss,sync_dist=True)
         self.log("val_coverage", metrics["coverage"],sync_dist=True)
         self.log("val_width", metrics["interval_width"],sync_dist=True)
-        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"]),sync_dist=True)
+        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"], self.coverage),sync_dist=True)
         
         return loss
     
@@ -186,7 +186,7 @@ class SWS_model(Q_model):
         loss, metrics = self.step(batch, batch_idx, coverages)
         
         self.log("val_loss", loss,sync_dist=True)
-        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"]),sync_dist=True)
+        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"], self.coverage),sync_dist=True)
 
         return loss
     
@@ -289,7 +289,7 @@ class SQ_model(Q_model):
         self.log("val_loss", loss,sync_dist=True)
         self.log("val_coverage", metrics["coverage"],sync_dist=True)
         self.log("val_width", metrics["interval_width"],sync_dist=True)
-        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"]),sync_dist=True)
+        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"], self.coverage),sync_dist=True)
 
         return loss
     
