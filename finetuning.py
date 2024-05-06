@@ -59,7 +59,6 @@ def fine_tuning():
     parser.add_argument('--n_seed', type=int, default=10, help='Number of seed')
     parser.add_argument('--gpu', type=int, default=0, help='The id of the gpu to use')
     parser.add_argument('--coverage', type=float, default=0.9, help='Targeted coverage')
-
     args = parser.parse_args()
 
     n_trial = len(fine_tuned_parameters["lr"]) * len(fine_tuned_parameters["dropout"])
@@ -77,14 +76,13 @@ def fine_tuning():
     for seed in seeds:
         for p in penalty:
             currated_nb_trial = 0
-            while currated_nb_trial != n_trial:
-                study = optuna.create_study(storage= "sqlite:///results/finetuning/recording.db", study_name = args.dataset_name+ "_" +  str(args.coverage) + "_" + args.loss + "_" + str(p) + "_" + str(seed), direction='minimize', load_if_exists=True)
-                currated_nb_trial = np.sum([ 1 if x.state != optuna.trial.TrialState.FAIL else 0 for x in study.trials])
-                current_n_trial = int(max(0,n_trial - currated_nb_trial))
-                print(f"Process seed {seed}, dataset {args.dataset_name}, loss {args.loss}, penalty {p} started. Remaining trials : {current_n_trial}/ {n_trial}")
-
+            study = optuna.create_study(storage= "sqlite:///results/finetuning/recording.db", study_name = args.dataset_name+ "_" +  str(args.coverage) + "_" + args.loss + "_" + str(p) + "_" + str(seed), direction='minimize', load_if_exists=True)
+            currated_nb_trial = int(np.sum([ 1 if x.state != optuna.trial.TrialState.FAIL else 0 for x in study.trials]))
+            while currated_nb_trial < n_trial:
+                print(f"Process seed {seed}, dataset {args.dataset_name}, loss {args.loss}, penalty {p} started. Remaining trials : {currated_nb_trial}/ {n_trial}")
                 study.optimize(lambda trial: objective(trial, args.dataset_name, args.loss, seed, p, args.coverage, data, args.gpu), n_trials=1, n_jobs=1)
-                currated_nb_trial += 1
+                currated_nb_trial = np.sum([ 1 if x.state != optuna.trial.TrialState.FAIL else 0 for x in study.trials])
+
                 torch.cuda.empty_cache()
 
         print(f"Process seed {seed}, dataset {args.dataset_name}, loss {args.loss} done")
