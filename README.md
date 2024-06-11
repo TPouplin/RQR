@@ -1,6 +1,6 @@
 ## Relaxed Quantile Regression: Prediction Intervals for Asymmetric Noise
 
-[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD-blue.svg)](https://github.com/alanjeffares/TANGOS/blob/main/LICENSE)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD-blue.svg)](https://github.com/TPouplin/RQR/blob/main/LICENSE)
 
 
 This repository contains the code associated with [our ICML 2024 paper](https://openreview.net/attachment?id=L8nSGvoyvb&name=pdf) where we introduce a new loss to train Deep Learning models for interval prediction. The Relaxed Quantile Regression (RQR) loss directly learning of the intervals without the intermediary steps of estimating quantiles.
