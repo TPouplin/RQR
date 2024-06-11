@@ -11,47 +11,15 @@ def GetDataset(name, base_path):
         data = pd.read_csv(base_path + "/sulfur.arff", header=None)
         data.drop(columns=[6], inplace=True)
         data = np.array(data.values.tolist())
-        
-        
+            
     elif name == "miami":
         data = pd.read_csv(base_path + "/miami.arff", header=None)
         data.drop(columns=[2], inplace=True)
         data = data[[0,1,4,5,6,7,8,9,10,11,12,13,14,15,16,3]]
         data = np.array(data.values.tolist())
-    
-    elif name == "analcatdata":
-        data = pd.read_csv(base_path + "/analcatdata_supreme.arff", header=None)
-        data = np.array(data.values.tolist())    
-
-    elif name == "mercedes":
-        data = pd.read_csv(base_path + "/mercedes", header=None)
-        data.drop(columns=[0], inplace=True)
-        col = list(data.columns)[1:] + list(data.columns)[:1]
-        data = data[col]
-
-        for i in range(2,10):
-            data[i] = pd.Categorical(data[i]).codes    
-        data = np.array(data.values.tolist())
-
-    
-    elif name == "isolet":
-        data = pd.read_csv(base_path + "/isolet", header=None)
-        data = np.array(data.values.tolist())    
-    elif name == "diamond":
-        data = pd.read_csv(base_path + "/diamond", header=None)
-        data = np.array(data.values.tolist())    
-    elif name == "pol":
-        data = pd.read_csv(base_path + "/pol.arff", header=None)
-        data = np.array(data.values.tolist())    
-
-
-
         
     else:
         data = np.loadtxt(base_path + "/UCI_Datasets/{}.txt".format(name))
-    
-    
-    # print(data[:2])
     
     X = data[:, :-1]
     y = data[:, -1].reshape(-1, 1)

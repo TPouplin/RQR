@@ -142,68 +142,7 @@ class Q_model(L.pytorch.LightningModule):
         self.log("test_loss", loss,sync_dist=True)        
         self.log("test_coverage", metrics["coverage"],sync_dist=True)
         self.log("test_width", metrics["interval_width"],sync_dist=True)
-            
-        # print( f"Metrics on test set  ! \n Coverage : {metrics['coverage']} \n Width : {metrics['interval_width']} \n Loss : {loss} \n")
-    
-        return loss
-    
-
-class SWS_model(Q_model):
-    def step(self, batch, batch_idx, coverages):
-        x, y = batch
-        
-        losses = []
-        
-        for c in coverages:
-            x_c = torch.cat([x, c.repeat(x.shape[0], 1)], dim=1)
-            y_hat = self(x_c)
-            losses.append(self.loss_fn(y_hat, y, c))
-            
-        metrics = compute_metrics(y_hat, y)
-        loss = torch.mean(torch.stack(losses))
-
-        return loss, metrics
-    
-    def training_step(self, batch, batch_idx):
-        """ Training step
-        """
-        
-        coverages = torch.rand(30).to(self.device) #number of coverage sample, default value from the OQR implementation
-        
-        loss, metrics = self.step(batch, batch_idx, coverages)
-        
-        self.log("train_loss", loss,sync_dist=True)
-
-        
-        return loss
-    
-    def validation_step(self, batch, batch_idx):
-        """ Validation step
-        """
-        
-        coverages = torch.rand(30).to(self.device) #number of dcoverage sample, default value from the OQR implementation
-        
-        loss, metrics = self.step(batch, batch_idx, coverages)
-        
-        self.log("val_loss", loss,sync_dist=True)
-        self.log("val_objective", objective_function(metrics["coverage"], metrics["interval_width"], self.coverage),sync_dist=True)
-
-        return loss
-    
-    def test_step(self, batch, batch_idx):
-        """ Test step
-        """
-        
-        coverages = torch.Tensor([self.coverage]).to(self.device)
-        
-        loss, metrics = self.step(batch, batch_idx, coverages)
-        
-        self.log("test_loss", loss,sync_dist=True)      
-        self.log("test_coverage", metrics["coverage"],sync_dist=True)
-        self.log("test_width", metrics["interval_width"],sync_dist=True)
-            
-        # print( f"Metrics on test set  ! \n Coverage : {metrics['coverage']} \n Width : {metrics['interval_width']} \n Loss : {loss} \n")
-    
+                
         return loss
     
 

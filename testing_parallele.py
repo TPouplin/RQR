@@ -8,15 +8,18 @@ def run_process(cmd):
     process = subprocess.Popen(cmd)
     process.wait()
 
-dataset_names = ["power","yacht","protein"] # ["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht"]
+dataset_names = ["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht","sulfur","miami","cpu_act"]
+loss = ["IR","WS","RQR-W","SQRC","SQRN"]
+
 n_seed = 10
-n_job = 4
-device =0
-coverage = 0.9
+n_job = 6
+device =2
+coverage = 0.3
 processes = []
 cmds = []
 for d in dataset_names:
-    cmds += [['python', 'testing.py', "--dataset_name",   d, "--n_seed", str(n_seed), "--gpu", str(device), "--coverage", str(coverage)]]
+    for l in loss:
+        cmds += [['python', 'testing.py', "--dataset_name",   d, "--loss",l, "--n_seed", str(n_seed), "--gpu", str(device), "--coverage", str(coverage)]]
             
 
 pool = Pool(n_job)

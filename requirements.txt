@@ -1,0 +1,9 @@
+datasets
+lightning
+optuna
+pandas
+scikit-learn
+tensorboard
+torch
+tqdm
+tqdm-multiprocess

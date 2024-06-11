@@ -52,7 +52,7 @@ def run_experiment(config, data=None):
     
     # print("Data loaded")
         
-    if config["loss"] == "SQR":
+    if config["loss"] == "SQRC":
         model = SQ_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
         model.narrowest = False
     elif config["loss"] == "SWS":

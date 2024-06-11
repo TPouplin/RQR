@@ -21,8 +21,6 @@ other_parameters = {
 }
 
 
-
-
 def objective(trial, dataset_name, loss, seed, p, coverage, data, device):
     config = {}
     config["dataset_name"] = dataset_name

@@ -33,55 +33,6 @@ class RQRW_loss(loss):
 
         return torch.mean(loss)
     
-    
-
-class RQRO_loss(loss):
- 
-    def forward(self, preds: torch.Tensor,  target: torch.Tensor) -> torch.Tensor:
-
-        # print(preds.shape, target.shape)
-        
-        y_pred_q1= torch.min(preds, axis=1)[0].view(-1,1)
-        y_pred_q2 = torch.max(preds, axis=1)[0].view(-1,1)
-        
-        
-        errors1 =   target -y_pred_q1 
-        errors2 =   target- y_pred_q2
-        loss1 = torch.maximum(errors1*errors2*(self.c), errors2*errors1*(self.c+-1))
-        
-        
-        loss2 = independence_penalty(target, y_pred_q1.view(1,-1), y_pred_q2.view(1,-1), pearsons_corr_multiplier=0, hsic_multiplier=self.l)
-        
-        loss = loss1 + loss2
-
-        return torch.mean(loss)
-    
-    
-
-    
-
-
-class OQR_loss(loss):
-
-    def forward(self, y_pred, target: torch.Tensor) -> torch.Tensor:
-        
-        y_pred_q1= torch.min(y_pred, axis=1)[0].view(-1,1)
-        y_pred_q2 = torch.max(y_pred, axis=1)[0].view(-1,1)
-        
-        loss1 = []
-        for i, q in enumerate(self.quantiles):
-            errors = target - y_pred[::, i]
-            loss1.append(torch.max((q - 1) * errors, q * errors).unsqueeze(-1))
-        loss1 = 2 * torch.cat(loss1, dim=2)
-        
-        loss2 = independence_penalty(target, y_pred_q1.view(1,-1), y_pred_q2.view(1,-1), pearsons_corr_multiplier=0, hsic_multiplier=self.l)
-        
-        loss = loss1 + loss2
-
-
-        return torch.mean(loss)
-
-
 
 class HQ_loss(loss):
 
@@ -115,43 +66,12 @@ class HQ_loss(loss):
         
         return loss
 
-class QR_loss(loss):
-
-    def forward(self, y_pred, target: torch.Tensor) -> torch.Tensor:
-        losses = []
-        for i, q in enumerate(self.quantiles):
-            errors = target - y_pred[::, i]
-            losses.append(torch.max((q - 1) * errors, q * errors).unsqueeze(-1))
-        losses = 2 * torch.cat(losses, dim=2)
-
-        return torch.mean(losses)
-
-
 class Winkler_Loss(loss):
     def forward(self, preds, target):
      
         assert not target.requires_grad
         assert preds.size(0) == target.size(0)
         c = self.q2-self.q1
-        alpha = 1-c
-        y_pred_q1 = preds[:, 0]
-        y_pred_q2 = preds[:, 1]
-        
-        below_1 = (y_pred_q1-target).gt(0)
-        below_2 = (target-y_pred_q2).gt(0)
-        
-        # print(y_pred_q1.shape, y_pred_q2.shape, target.shape, below_1.shape, below_2.shape)
-        loss = (y_pred_q2-y_pred_q1) + (2/alpha)*(y_pred_q1-target)*below_1  + (2/alpha)*(target-y_pred_q2)*below_2
-        return loss.mean()
-    
-
-    
-    
-class S_Winkler_Loss(loss):
-    def forward(self, preds, target, c=None):
-        if c is None:
-            c = self.coverage
- 
         alpha = 1-c
         y_pred_q1 = preds[:, 0]
         y_pred_q2 = preds[:, 1]
@@ -179,14 +99,10 @@ class SQR_loss(loss):
     
     
     
-dict_loss = {"QR": QR_loss,
-             "WS": Winkler_Loss,
+dict_loss = {"WS": Winkler_Loss,
              "RQR-W": RQRW_loss,
              "IR": HQ_loss,
-             "SQR": SQR_loss,
-             "RQR-O": RQRO_loss,
-             "OQR" : OQR_loss,
-             "SWS" : S_Winkler_Loss,
+             "SQRC": SQR_loss,
              "SQRN" : SQR_loss
 }
 
