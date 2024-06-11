@@ -1,6 +1,5 @@
 ## Relaxed Quantile Regression: Prediction Intervals for Asymmetric Noise
 
-[![pdf]](https://openreview.net/attachment?id=L8nSGvoyvb&name=pdf)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD-blue.svg)](https://github.com/alanjeffares/TANGOS/blob/main/LICENSE)
 
 
