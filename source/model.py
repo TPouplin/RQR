@@ -41,12 +41,9 @@ class Q_model(L.pytorch.LightningModule):
         self.hidden_size = hidden_size
         
         
-        if loss ==  "SQR" or loss == "SQRN":
+        if loss ==  "SQRC" or loss == "SQRN":
             self.in_shape = x_shape+1
             self.out_shape = 1
-        elif loss == "SWS":
-            self.in_shape = x_shape +1
-            self.out_shape = 2
         else:
             self.in_shape = x_shape
             self.out_shape = 2

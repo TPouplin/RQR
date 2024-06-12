@@ -6,7 +6,7 @@ def run_process(cmd):
     process = subprocess.Popen(cmd)
     process.wait()
 
-loss =   ["RQR-W","SQR","IR","WS"]
+loss =   ["RQR-W","SQRC","IR","WS"]
 dataset_names =  ["boston", "concrete", "energy", "kin8nm", "naval", "power", "protein", "wine", "yacht", "miami","cpu_act", "sulfur"]
 coverages = [0.9,0.7,0.5,0.3]
 

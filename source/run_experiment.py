@@ -1,7 +1,5 @@
-from source.parameters import best_parameter_dict
-from source.model import Q_model, SQ_model, SWS_model
+from source.model import Q_model, SQ_model
 from data.dataset import GetDataset, Dataset
-
 
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -55,8 +53,6 @@ def run_experiment(config, data=None):
     if config["loss"] == "SQRC":
         model = SQ_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
         model.narrowest = False
-    elif config["loss"] == "SWS":
-        model = SWS_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
     elif config["loss"] == "SQRN":
         model = SQ_model(coverage=config["coverage"], x_shape=X_train.shape[1], hidden_size=64, dropout=config["dropout"], lr=config["lr"], loss = config["loss"], penalty=config["penalty"])
         model.narrowest = True

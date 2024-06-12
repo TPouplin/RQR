@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from source.OQR import *
-import numpy as np
 
 class loss(nn.Module):
     def __init__( self, coverage, penalty=0):
