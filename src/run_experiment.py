@@ -1,4 +1,4 @@
-from source.model import Q_model, SQ_model
+from src.model import Q_model, SQ_model
 from data.dataset import GetDataset, Dataset
 
 from sklearn.model_selection import train_test_split

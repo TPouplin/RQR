@@ -25,30 +25,37 @@ pip install -r requirements.txt
 
 **Data**
 
-The datasets mentionned in the paper can be found in the data folder `source/data/`.
-The UCI datasets have to be unzip.
+The datasets mentioned in the paper can be found in the data folder `src/data/`.
+The UCI datasets have to be unzipped e.g.
+```
+unzip data/UCI_Datasets.zip -d data
+```
 
-**Running**
+**Quick Start**
+To quickly get started with the RQR loss objective, check out [`quick_start.ipynb`](TODO: add link) which contains a simple implementation of the objective in Pytorch and an illustration on known noise distributions (i.e. reproducing Table 2 from the text).
+
+
+**Running Experiments**
 
 The hyperparameter fine-tuning can be run for all the datasets and losses proposed in the paper with the following command : 
 
-```python finetuning_parallele.py```
+```python finetuning_parallel.py```
 
 Results and hyperparameters of these experiments are saved in an optuna database `results/finetuning/recording.db`.
 
-The optimal hyperparemeters found can be used to recreate the benchmark presented in the paper with the following command : 
+The optimal hyperparameters found can be used to recreate the benchmark presented in the paper with the following command : 
 
-```python testing_parallele.py```
+```python testing_parallel.py```
 
 ### Citation
 If you use this code, please cite the associated paper.
 ```
-@misc{pouplin2024relaxed,
-      title={Relaxed Quantile Regression: Prediction Intervals for Asymmetric Noise}, 
+@inproceedings{
+      pouplin2024relaxed,
+      title={Relaxed Quantile Regression: Prediction Intervals for Asymmetric Noise},
       author={Thomas Pouplin and Alan Jeffares and Nabeel Seedat and Mihaela van der Schaar},
+      booktitle={Forty-first International Conference on Machine Learning},
       year={2024},
-      eprint={2406.03258},
-      archivePrefix={arXiv},
-      primaryClass={stat.ML}
+      url={https://openreview.net/forum?id=L8nSGvoyvb}
 }
 ```

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import lightning as L
-from source.loss import *
-from source.metrics import *
+from src.loss import *
+from src.metrics import *
 from tqdm import tqdm
 
 def objective_function(coverage, width, target_coverage):
