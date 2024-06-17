@@ -1,7 +1,7 @@
 
 import optuna
 import argparse
-from source.run_experiment import run_experiment
+from src.run_experiment import run_experiment
 import torch 
 from finetuning import fine_tuned_parameters, other_parameters
 import os 

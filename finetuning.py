@@ -1,11 +1,11 @@
-
 import optuna
 import argparse
-from source.run_experiment import run_experiment
+from src.run_experiment import run_experiment
 import torch 
 import numpy as np 
 from data.dataset import GetDataset
-from source.model import objective_function
+from src.model import objective_function
+
 
 fine_tuned_parameters = {
     "lr": [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001], #
@@ -49,7 +49,6 @@ def objective(trial, dataset_name, loss, seed, p, coverage, data, device):
     return objective_function(results["test_coverage"],results["test_width"], config["coverage"])
 
 
-
 def fine_tuning():
     parser = argparse.ArgumentParser(description='Run the experiment')
     parser.add_argument('--dataset_name', type=str, default="boston", help='The name of the dataset')
@@ -66,7 +65,7 @@ def fine_tuning():
     else:
         penalty = fine_tuned_parameters["penalty"]
         
-    data = GetDataset(args.dataset_name, "data")
+    data = GetDataset(args.dataset_name, "data/UCI_Datasets/")
     
     
     seeds = np.arange(0,args.n_seed,1)

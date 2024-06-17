@@ -1,2 +1,9 @@
 results/finetuning/*
 results/logs/*
+
+# ignore pycache folders anywhere in the repo
+__pycache__/
+*.pyc
+
+
+

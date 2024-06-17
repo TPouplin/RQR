@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 import pandas as pd 
+
+
 def GetDataset(name, base_path):
     if name == "cpu_act":
         data = pd.read_csv(base_path + "/cpu_act.arff", header=None)
@@ -19,7 +21,7 @@ def GetDataset(name, base_path):
         data = np.array(data.values.tolist())
         
     else:
-        data = np.loadtxt(base_path + "/UCI_Datasets/{}.txt".format(name))
+        data = np.loadtxt(base_path + f"{name}.txt")
     
     X = data[:, :-1]
     y = data[:, -1].reshape(-1, 1)
