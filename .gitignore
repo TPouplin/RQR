@@ -1,6 +1,7 @@
 results/finetuning/*
 results/logs/*
-
+*.txt
+*.arff
 # ignore pycache folders anywhere in the repo
 __pycache__/
 *.pyc
