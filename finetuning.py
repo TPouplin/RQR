@@ -5,7 +5,7 @@ import torch
 import numpy as np 
 from data.dataset import GetDataset
 from src.model import objective_function
-
+import os 
 
 fine_tuned_parameters = {
     "lr": [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001], #
@@ -60,15 +60,19 @@ def fine_tuning():
 
     n_trial = len(fine_tuned_parameters["lr"]) * len(fine_tuned_parameters["dropout"])
     
-    if not ( args.loss in ['RQR-W', 'RQR-O', 'OQR', 'IR']):
+    if args.loss not in ['RQR-W', 'IR']:
         penalty = [0]
     else:
         penalty = fine_tuned_parameters["penalty"]
         
-    data = GetDataset(args.dataset_name, "data/UCI_Datasets/")
+    data = GetDataset(args.dataset_name, "data/")
     
     
     seeds = np.arange(0,args.n_seed,1)
+    
+    os.makedirs("results", exist_ok=True)
+    os.makedirs("results/finetuning", exist_ok=True)
+    os.makedirs("results/logs", exist_ok=True)
     
     for seed in seeds:
         for p in penalty:
