@@ -47,10 +47,7 @@ class Q_model(L.pytorch.LightningModule):
         else:
             self.in_shape = x_shape
             self.out_shape = 2
-        
-
-
-        
+                
         self.dropout = dropout
         self.lr = lr
         self.loss = loss
@@ -141,6 +138,13 @@ class Q_model(L.pytorch.LightningModule):
         self.log("test_width", metrics["interval_width"],sync_dist=True)
                 
         return loss
+    
+    def predict_step(self, batch, batch_idx):
+        """ Prediction step
+        """
+        x, y = batch
+        y_hat = self(x)
+        return y_hat
     
 
 

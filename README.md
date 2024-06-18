@@ -26,9 +26,9 @@ pip install -r requirements.txt
 **Data**
 
 The datasets mentioned in the paper can be found in the data folder `src/data/`.
-The UCI datasets have to be unzipped e.g.
+The datasets have to be unzipped e.g.
 ```
-unzip data/UCI_Datasets.zip -d data
+unzip data/datasets.zip -d data
 ```
 
 **Quick Start**

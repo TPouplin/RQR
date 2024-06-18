@@ -7,3 +7,4 @@ tensorboard
 torch
 tqdm
 tqdm-multiprocess
+matplotlib

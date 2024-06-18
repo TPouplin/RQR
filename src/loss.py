@@ -21,6 +21,13 @@ class RQRW_loss(loss):
         y_pred_q1 = preds[:, 0]
         y_pred_q2 = preds[:, 1]
 
+        # print("target :" , target[:10])
+        # print("y_pred_q1 :" , y_pred_q1[:10])
+        # print("y_pred_q2 :" , y_pred_q2[:10])
+        # print("Q1 :" , self.q1)
+        # print("Q2 :" , self.q2)
+        # print("C :" , self.c)
+
         errors1 =   target -y_pred_q1 
         errors2 =   target- y_pred_q2
         errors =y_pred_q2-y_pred_q1 
