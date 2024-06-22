@@ -3,7 +3,7 @@
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD-blue.svg)](https://github.com/TPouplin/RQR/blob/main/LICENSE)
 
 
-This repository contains the code associated with [our ICML 2024 paper](https://openreview.net/attachment?id=L8nSGvoyvb&name=pdf) where we introduce a new loss to train Deep Learning models for interval prediction. The Relaxed Quantile Regression (RQR) loss directly learning of the intervals without the intermediary steps of estimating quantiles.
+This repository contains the code associated with [our ICML 2024 paper](https://openreview.net/forum?id=L8nSGvoyvb) where we introduce a new loss to train Deep Learning models for interval prediction. The Relaxed Quantile Regression (RQR) loss directly learning of the intervals without the intermediary steps of estimating quantiles.
 
 ### Experiments
 **Setup**
@@ -32,7 +32,7 @@ unzip data/datasets.zip -d data
 ```
 
 **Quick Start**
-To quickly get started with the RQR loss objective, check out [`quick_start.ipynb`](TODO: add link) which contains a simple implementation of the objective in Pytorch and an illustration on known noise distributions (i.e. reproducing Table 2 from the text).
+To quickly get started with the RQR loss objective, check out [`quick_start.ipynb`](https://github.com/TPouplin/RQR/blob/main/quick_start.ipynb) which contains a simple implementation of the objective in Pytorch and an illustration on known noise distributions (i.e. reproducing Table 2 from the text).
 
 
 **Running Width Experiments**
