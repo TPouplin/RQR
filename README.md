@@ -35,7 +35,7 @@ unzip data/datasets.zip -d data
 To quickly get started with the RQR loss objective, check out [`quick_start.ipynb`](TODO: add link) which contains a simple implementation of the objective in Pytorch and an illustration on known noise distributions (i.e. reproducing Table 2 from the text).
 
 
-**Running Experiments**
+**Running Width Experiments**
 
 The hyperparameter fine-tuning can be run for all the datasets and losses proposed in the paper with the following command : 
 
@@ -46,6 +46,13 @@ Results and hyperparameters of these experiments are saved in an optuna database
 The optimal hyperparameters found can be used to recreate the benchmark presented in the paper with the following command : 
 
 ```python testing_parallel.py```
+
+**Running Orthogonal Experiments**
+
+The orthogonal experiments benchmark can be run all the datasets and losses proposed in the paper with the following command : 
+
+```python src/RQR-O/run_orthogonal_experiment.py```
+
 
 ### Citation
 If you use this code, please cite the associated paper.
