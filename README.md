@@ -49,7 +49,8 @@ The optimal hyperparameters found can be used to recreate the benchmark presente
 
 **Running Orthogonal Experiments**
 
-The orthogonal experiments benchmark can be run all the datasets and losses proposed in the paper with the following command : 
+The orthogonal experiments implementation is a modified version of the official OQR repository : https://github.com/Shai128/oqr. 
+It can be run for all the datasets and losses proposed in the paper with the following command : 
 
 ```python src/RQR-O/run_orthogonal_experiment.py```
 
