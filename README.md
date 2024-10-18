@@ -32,7 +32,50 @@ unzip data/datasets.zip -d data
 ```
 
 **Quick Start**
-To quickly get started with the RQR loss objective, check out [`quick_start.ipynb`](https://github.com/TPouplin/RQR/blob/main/quick_start.ipynb) which contains a simple implementation of the objective in Pytorch and an illustration on known noise distributions (i.e. reproducing Table 2 from the text).
+
+To quickly get started with the RQR loss objective, we provide the following resources.
+
+A self-contained drop in loss function for Pytorch is provided in the following code block.
+
+```
+class RQRW(torch.nn.Module):
+    """
+    RQR-W loss function for quantile regression.
+    
+    Args:
+        alpha: float, default=0.9
+            The desired coverage level in (0,1).
+        lam: float, default=0.
+            Width minimizing regularization parameter >= 0.
+    
+    See also:
+        "Relaxed Quantile Regression: Prediction Intervals for Asymmetric Noise"
+    """
+    def __init__(self, alpha: float = 0.9, lam: float = 0.):
+        super().__init__()
+        self.alpha = alpha
+        self.l = lam
+        self.q1 = (1 - lam)/2
+        self.q2 = 1 - (1 - lam)/2
+ 
+    def forward(self, preds: torch.Tensor,  target: torch.Tensor) -> torch.Tensor:
+        y_pred_q1 = preds[:, 0]
+        y_pred_q2 = preds[:, 1]
+
+        diff_mu_1 = target - y_pred_q1 
+        diff_mu_2 = target - y_pred_q2
+        width = y_pred_q2 - y_pred_q1 
+        RQR_loss = torch.maximum(diff_mu_1 * diff_mu_2 * (self.alpha + 2 * self.l),
+                                 diff_mu_2 * diff_mu_1 * (self.alpha + 2 * self.l - 1))
+        penalty = self.l * torch.square(width) * 0.5
+        loss = RQR_loss + penalty
+
+        return torch.mean(loss)
+```
+
+For an example usage in a self-contained notebook, check out  [`quick_start1.ipynb`](https://github.com/TPouplin/RQR/blob/main/quick_start1.ipynb).
+
+To get started with this repositories implementation check out [`quick_start2.ipynb`](https://github.com/TPouplin/RQR/blob/main/quick_start2.ipynb) which provides an illustration on known noise distributions (i.e. reproducing Table 2 from the text).
 
 
 **Running Width Experiments**
