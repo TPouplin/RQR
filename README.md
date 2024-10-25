@@ -37,7 +37,7 @@ To quickly get started with the RQR loss objective, we provide the following res
 
 A self-contained drop in loss function for Pytorch is provided in the following code block.
 
-```
+```python
 class RQRW(torch.nn.Module):
     """
     RQR-W loss function for quantile regression.
