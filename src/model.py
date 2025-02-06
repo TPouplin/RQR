@@ -94,7 +94,7 @@ class Q_model(L.pytorch.LightningModule):
         
         loss = self.loss_fn(y_hat, y)
         
-        metrics = compute_metrics(y_hat, y)
+        metrics = compute_metrics(y_hat, y[:,0])
 
         return loss, metrics
     
