@@ -90,12 +90,15 @@ The optimal hyperparameters found can be used to recreate the benchmark presente
 
 ```python testing_parallel.py```
 
+*Edit 06/02: While rerunning this experiment for the final version of the paper we accidentally introduced a bug which is fixed in the current version of this repository. These updated results are also reflected in the updated version of the paper on [arxiv](https://arxiv.org/abs/2406.03258).*
+
 **Running Orthogonal Experiments**
 
 The orthogonal experiments implementation is a modified version of the official OQR repository : https://github.com/Shai128/oqr. 
 It can be run for all the datasets and losses proposed in the paper with the following command : 
 
 ```python src/RQR-O/run_orthogonal_experiment.py```
+
 
 
 ### Citation
